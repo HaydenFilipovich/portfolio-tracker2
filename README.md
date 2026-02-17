@@ -2,55 +2,49 @@
 
 This project is a Streamlit-based portfolio tracker that allows users to track equity holdings in real time and evaluate portfolio risk using custom scenarios and historical stress tests.
 
-## Features
-
-### Portfolio Tracking
-- Add and remove equity holdings (persisted in SQLite)
-- CSV bulk import with template download and validation
-- Live price data pulled from Yahoo Finance
-- Automatic calculation of:
-  - Market value
-  - Dollar gain/loss
-  - Percentage return
-- Summary metrics:
-  - Total portfolio value
-  - Total gain/loss
-  - Number of positions
-
-### What-If Scenario Testing
-- Apply a uniform market-wide price shock (-50% to +50%)
-- Override individual ticker returns
-- Compare:
-  - Current portfolio value
-  - Scenario portfolio value
-  - Dollar and percentage impact
-
-### Historical Stress Tests
+Features
+Portfolio Tracking
+Add and remove equity holdings (persisted in SQLite)
+CSV bulk import with template download and validation
+Live price data pulled from Yahoo Finance
+Automatic calculation of:
+Market value
+Dollar gain/loss
+Percentage return
+Summary metrics:
+Total portfolio value
+Total gain/loss
+Number of positions
+What-If Scenario Testing
+Apply a uniform market-wide price shock (-50% to +50%)
+Override individual ticker returns
+Compare:
+Current portfolio value
+Scenario portfolio value
+Dollar and percentage impact
+Historical Stress Tests
 Simulate portfolio performance under major historical market events using actual per-ticker peak-to-trough drawdowns:
-- 2008 Financial Crisis
-- COVID Crash (March 2020)
-- Dot-com Bust (2000-2002)
-- Black Monday (1987)
-- 2022 Bear Market
 
+2008 Financial Crisis
+COVID Crash (March 2020)
+Dot-com Bust (2000-2002)
+Black Monday (1987)
+2022 Bear Market
 Per-ticker breakdown available in expandable panels.
 
-### Risk & Performance Analytics
-- **Performance**: Annualized return, volatility, Sharpe ratio, Sortino ratio, max drawdown
-- **Charts**: Cumulative returns, drawdown, daily returns distribution
-- **VaR / CVaR**: Historical and parametric (normal) at 90/95/99% confidence
-- **Monte Carlo**: GBM simulation with configurable paths and horizon, terminal value histogram, percentile fan chart
+Risk & Performance Analytics
+Performance: Annualized return, volatility, Sharpe ratio, Sortino ratio, max drawdown
+Charts: Cumulative returns, drawdown, daily returns distribution
+VaR / CVaR: Historical and parametric (normal) at 90/95/99% confidence
+Monte Carlo: GBM simulation with configurable paths and horizon, terminal value histogram, percentile fan chart
 
-### AI Risk Brief
-Uses the Anthropic API (Claude) to generate a concise narrative risk summary from the computed metrics. Requires the `anthropic` Python package and an API key.
+AI Risk Brief
+Uses a locally hosted Ollama model (llama3.2) to generate a concise narrative risk summary from the computed metrics. Requires Ollama to be installed and running locally (no paid API key required).
 
-## AI Risk Brief — Exact Prompts
+AI Risk Brief — Exact Prompts
+The prompts are defined as constants in app.py (RISK_BRIEF_SYSTEM and RISK_BRIEF_USER_TEMPLATE) and are viewable in-app via the "View prompt sent to the model" expander. The call uses temperature=0 for deterministic output.
 
-The prompts are defined as constants in `app.py` (`RISK_BRIEF_SYSTEM` and `RISK_BRIEF_USER_TEMPLATE`) and are viewable in-app via the "View prompt sent to Claude" expander. The call uses `temperature=0` for deterministic output.
-
-### System Prompt
-
-```
+System Prompt
 You are a portfolio risk analyst. Given portfolio data and computed risk metrics, produce a concise risk brief.
 
 Structure your response in exactly three sections:
@@ -69,13 +63,9 @@ Rules:
 - Keep total response under 300 words.
 - Do not use hedging language ("consider", "might", "could"). State findings directly.
 - Do not add disclaimers about not being financial advice.
-```
+User Message Template
+The {placeholders} are populated with live portfolio data before each call.
 
-### User Message Template
-
-The `{placeholders}` are populated with live portfolio data before each call.
-
-```
 ## Portfolio Holdings
 {holdings_table}
 
@@ -101,35 +91,28 @@ The `{placeholders}` are populated with live portfolio data before each call.
 
 ## Stress Test Results
 {stress_table}
-```
-
-### API Call Parameters
-
-| Parameter   | Value                        |
-|-------------|------------------------------|
-| Model       | `claude-sonnet-4-5-20250929` |
-| Temperature | `0`                          |
-| Max tokens  | `1024`                       |
-
-## Tech Stack
-- Python
-- Streamlit
-- Pandas / NumPy
-- Plotly
-- Yahoo Finance (yfinance)
-- SQLite (persistence)
-- Anthropic API (AI Risk Brief, optional)
-
-## Running the App Locally
-
-```bash
+API Call Parameters
+Parameter	Value
+Model	llama3.2 (via Ollama)
+Temperature	0
+Max tokens	1024
+Tech Stack
+Python
+Streamlit
+Pandas / NumPy
+Plotly
+Yahoo Finance (yfinance)
+SQLite (persistence)
+Ollama (AI Risk Brief, optional)
+Running the App Locally
 pip install -r requirements.txt
 
-# Optional: enable AI Risk Brief
-pip install anthropic
-# Set your ANTHROPIC_API_KEY as an environment variable (see provider docs)
+# Optional: enable AI Risk Brief (local, no API key)
+# 1) Install Ollama: https://ollama.com
+# 2) Start the Ollama server:
+#    ollama serve
+# 3) Pull the model:
+#    ollama pull llama3.2
 
 streamlit run app.py
-```
-
-Then open the app in your browser at: http://localhost:8501
+Then open the app in your browser at: http://localhost:8501 (or the port Streamlit prints, e.g. http://localhost:8502)
