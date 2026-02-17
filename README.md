@@ -42,74 +42,87 @@ Per-ticker breakdown available in expandable panels.
 - **Monte Carlo**: GBM simulation with configurable paths and horizon, terminal value histogram, percentile fan chart
 
 ### AI Risk Brief
-Uses the Anthropic API (Claude) to generate a concise narrative risk summary from the computed metrics. Requires the `anthropic` Python package and an API key.
+Uses the OpenAI API (GPT-4o) to generate a concise narrative risk summary from the computed metrics. Requires the `openai` Python package and an API key.
 
 ## AI Risk Brief — Exact Prompts
 
-The prompts are defined as constants in `app.py` (`RISK_BRIEF_SYSTEM` and `RISK_BRIEF_USER_TEMPLATE`) and are viewable in-app via the "View prompt sent to Claude" expander. The call uses `temperature=0` for deterministic output.
+The prompts are defined as constants in `app.py` (`RISK_BRIEF_SYSTEM` and `RISK_BRIEF_USER_TEMPLATE`) and are viewable in-app via the "View prompt sent to GPT-4o" expander. The call uses `temperature=0` for deterministic output.
 
 ### System Prompt
 
-```
 You are a portfolio risk analyst. Given portfolio data and computed risk metrics, produce a concise risk brief.
 
 Structure your response in exactly three sections:
 
-**Portfolio Overview**
+Portfolio Overview
 2-3 sentences summarizing the portfolio composition, total value, and overall risk posture.
 
-**Key Risk Findings**
+Key Risk Findings
 3-5 bullet points citing specific numbers from the data. Cover concentration risk, volatility, drawdown exposure, and tail risk (VaR/CVaR). Compare Sharpe and Sortino ratios to characterize the return/risk profile.
 
-**Recommendations**
+Recommendations
 2-4 bullet points with specific, actionable suggestions. Reference the data to justify each recommendation.
 
 Rules:
-- Cite exact numbers from the provided data.
-- Keep total response under 300 words.
-- Do not use hedging language ("consider", "might", "could"). State findings directly.
-- Do not add disclaimers about not being financial advice.
-```
+
+Cite exact numbers from the provided data.
+
+Keep total response under 300 words.
+
+Do not use hedging language ("consider", "might", "could"). State findings directly.
+
+Do not add disclaimers about not being financial advice.
+
 
 ### User Message Template
 
 The `{placeholders}` are populated with live portfolio data before each call.
 
-```
-## Portfolio Holdings
+Portfolio Holdings
 {holdings_table}
 
-## Performance Metrics ({lookback} lookback)
-- Annualized Return: {ann_return}
-- Annualized Volatility: {ann_vol}
-- Sharpe Ratio: {sharpe}
-- Sortino Ratio: {sortino}
-- Max Drawdown: {max_dd}
+Performance Metrics ({lookback} lookback)
+Annualized Return: {ann_return}
 
-## Value at Risk ({confidence}% confidence, 1-day)
-- Historical VaR: ${var_hist_dollar} ({var_hist_pct} of portfolio)
-- Historical CVaR: ${cvar_hist_dollar} ({cvar_hist_pct} of portfolio)
-- Parametric VaR: ${var_param_dollar} ({var_param_pct} of portfolio)
-- Parametric CVaR: ${cvar_param_dollar} ({cvar_param_pct} of portfolio)
+Annualized Volatility: {ann_vol}
 
-## Monte Carlo Simulation ({mc_horizon}-day horizon, {mc_sims} simulations)
-- Current portfolio value: ${current_value}
-- Mean terminal value: ${mc_mean}
-- Median terminal value: ${mc_median}
-- 5th percentile: ${mc_5}
-- 95th percentile: ${mc_95}
+Sharpe Ratio: {sharpe}
 
-## Stress Test Results
+Sortino Ratio: {sortino}
+
+Max Drawdown: {max_dd}
+
+Value at Risk ({confidence}% confidence, 1-day)
+Historical VaR: ${var_hist_dollar} ({var_hist_pct} of portfolio)
+
+Historical CVaR: ${cvar_hist_dollar} ({cvar_hist_pct} of portfolio)
+
+Parametric VaR: ${var_param_dollar} ({var_param_pct} of portfolio)
+
+Parametric CVaR: ${cvar_param_dollar} ({cvar_param_pct} of portfolio)
+
+Monte Carlo Simulation ({mc_horizon}-day horizon, {mc_sims} simulations)
+Current portfolio value: ${current_value}
+
+Mean terminal value: ${mc_mean}
+
+Median terminal value: ${mc_median}
+
+5th percentile: ${mc_5}
+
+95th percentile: ${mc_95}
+
+Stress Test Results
 {stress_table}
-```
+
 
 ### API Call Parameters
 
-| Parameter   | Value                        |
-|-------------|------------------------------|
-| Model       | `claude-sonnet-4-5-20250929` |
-| Temperature | `0`                          |
-| Max tokens  | `1024`                       |
+| Parameter   | Value      |
+|-------------|------------|
+| Model       | `gpt-4o`   |
+| Temperature | `0`        |
+| Max tokens  | `1024`     |
 
 ## Tech Stack
 - Python
@@ -118,7 +131,7 @@ The `{placeholders}` are populated with live portfolio data before each call.
 - Plotly
 - Yahoo Finance (yfinance)
 - SQLite (persistence)
-- Anthropic API (AI Risk Brief, optional)
+- OpenAI API (AI Risk Brief, optional)
 
 ## Running the App Locally
 
@@ -126,10 +139,8 @@ The `{placeholders}` are populated with live portfolio data before each call.
 pip install -r requirements.txt
 
 # Optional: enable AI Risk Brief
-pip install anthropic
-# Set your ANTHROPIC_API_KEY as an environment variable (see provider docs)
+pip install openai
+# Set your OPENAI_API_KEY as an environment variable (see provider docs)
 
 streamlit run app.py
-```
-
 Then open the app in your browser at: http://localhost:8501
