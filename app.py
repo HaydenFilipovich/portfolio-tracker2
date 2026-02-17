@@ -922,51 +922,48 @@ else:
     st.divider()
     st.header("Portfolio Assistant")
 
-    api_key = os.getenv("OPENAI_API_KEY")
-    if not api_key:
-        st.warning("Set OPENAI_API_KEY in your .env file to enable the Portfolio Assistant.")
-    else:
-        # Build portfolio context for the system prompt
-        portfolio_lines = []
-        for r in rows:
-            line = (
-                f"{r['Ticker']}: {r['Shares']} shares, "
-                f"cost basis ${r['Cost Basis']:.2f}, "
-                f"current price ${r['Current Price']:.2f}, "
-                f"market value ${r['Market Value']:,.2f}, "
-                f"gain/loss ${r['Gain/Loss ($)']:+,.2f} ({r['Gain/Loss (%)']:+.2f}%)"
-            ) if r["Current Price"] is not None else f"{r['Ticker']}: price unavailable"
-            portfolio_lines.append(line)
+    # Build portfolio context for the system prompt
+    portfolio_lines = []
+    for r in rows:
+        line = (
+            f"{r['Ticker']}: {r['Shares']} shares, "
+            f"cost basis ${r['Cost Basis']:.2f}, "
+            f"current price ${r['Current Price']:.2f}, "
+            f"market value ${r['Market Value']:,.2f}, "
+            f"gain/loss ${r['Gain/Loss ($)']:+,.2f} ({r['Gain/Loss (%)']:+.2f}%)"
+        ) if r["Current Price"] is not None else f"{r['Ticker']}: price unavailable"
+        portfolio_lines.append(line)
 
-        portfolio_summary = "\n".join(portfolio_lines)
-        system_prompt = (
-            "You are a helpful portfolio advisor. The user has the following holdings:\n\n"
-            f"{portfolio_summary}\n\n"
-            f"Total portfolio value: ${total_value:,.2f}\n"
-            f"Total cost basis: ${total_cost:,.2f}\n"
-            f"Total gain/loss: ${total_gain:+,.2f} ({total_gain_pct:+.2f}%)\n\n"
-            "Provide concise, actionable advice referencing their actual holdings. "
-            "Remind the user this is not financial advice."
-        )
+    portfolio_summary = "\n".join(portfolio_lines)
+    system_prompt = (
+        "You are a helpful portfolio advisor. The user has the following holdings:\n\n"
+        f"{portfolio_summary}\n\n"
+        f"Total portfolio value: ${total_value:,.2f}\n"
+        f"Total cost basis: ${total_cost:,.2f}\n"
+        f"Total gain/loss: ${total_gain:+,.2f} ({total_gain_pct:+.2f}%)\n\n"
+        "Provide concise, actionable advice referencing their actual holdings. "
+        "Remind the user this is not financial advice."
+    )
 
-        # Chat history
-        if "chat_messages" not in st.session_state:
-            st.session_state.chat_messages = []
+    # Chat history
+    if "chat_messages" not in st.session_state:
+        st.session_state.chat_messages = []
 
-        for msg in st.session_state.chat_messages:
-            with st.chat_message(msg["role"]):
-                st.markdown(msg["content"])
+    for msg in st.session_state.chat_messages:
+        with st.chat_message(msg["role"]):
+            st.markdown(msg["content"])
 
-        if prompt := st.chat_input("Ask about your portfolio..."):
-            st.session_state.chat_messages.append({"role": "user", "content": prompt})
-            with st.chat_message("user"):
-                st.markdown(prompt)
+    if prompt := st.chat_input("Ask about your portfolio..."):
+        st.session_state.chat_messages.append({"role": "user", "content": prompt})
+        with st.chat_message("user"):
+            st.markdown(prompt)
 
-            with st.chat_message("assistant"):
-                client = OpenAI(api_key=api_key)
-                with st.spinner("Thinking..."):
+        with st.chat_message("assistant"):
+            client = OpenAI(base_url="http://localhost:11434/v1", api_key="ollama")
+            with st.spinner("Thinking..."):
+                try:
                     response = client.chat.completions.create(
-                        model="gpt-4o",
+                        model="llama3.2",
                         max_tokens=1024,
                         messages=[
                             {"role": "system", "content": system_prompt},
@@ -976,7 +973,9 @@ else:
                         ],
                     )
                     reply = response.choices[0].message.content
-                st.markdown(reply)
+                except Exception:
+                    reply = "Could not reach the Ollama server. Make sure Ollama is running (`ollama serve`) and the llama3.2 model is pulled (`ollama pull llama3.2`)."
+            st.markdown(reply)
 
-            st.session_state.chat_messages.append({"role": "assistant", "content": reply})
+        st.session_state.chat_messages.append({"role": "assistant", "content": reply})
 
